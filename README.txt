@@ -1,0 +1,1 @@
+Coloque esta pasta em htdocs e acesse index.php. Endpoints usam cURL para garantir conexões robustas com Discogs.
