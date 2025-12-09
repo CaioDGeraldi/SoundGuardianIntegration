@@ -1,0 +1,104 @@
+-- Banco de dados Collectify
+CREATE DATABASE IF NOT EXISTS collectify_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE collectify_db;
+
+-- Tabela de usuários
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    tipo ENUM('visitante','admin') DEFAULT 'visitante',
+    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de itens (RF001, RF002, RNF002)
+CREATE TABLE itens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50),
+    artista_banda VARCHAR(100) NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    gravadora VARCHAR(100),
+    ano_lancamento INT NOT NULL,
+    origem VARCHAR(50),
+    edicao VARCHAR(50),
+    qualidade VARCHAR(20),
+    tipo_midia ENUM('CD','LP','BoxSet','Livro') NOT NULL,
+    encarte BOOLEAN DEFAULT FALSE,
+    obi_coa BOOLEAN DEFAULT FALSE,
+    hypersticker BOOLEAN DEFAULT FALSE,
+    boxset BOOLEAN DEFAULT FALSE,
+    autografado BOOLEAN DEFAULT FALSE,
+    primeira_edicao BOOLEAN DEFAULT FALSE,
+    limitado BOOLEAN DEFAULT FALSE,
+    importado BOOLEAN DEFAULT FALSE,
+    observacoes TEXT,
+    imagem VARCHAR(255),
+    usuario_id INT,
+    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_artista (artista_banda),
+    INDEX idx_tipo_midia (tipo_midia),
+    INDEX idx_ano (ano_lancamento)
+);
+
+-- Tabela de coleções (RF005, RNF003)
+CREATE TABLE colecoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    categoria ENUM('genero','favoritas','tipo_item') NOT NULL,
+    descricao TEXT,
+    usuario_id INT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_categoria (categoria)
+);
+
+-- Tabela de relação itens-coleções (RF012)
+CREATE TABLE itens_colecao (
+    item_id INT,
+    colecao_id INT,
+    data_adicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (item_id, colecao_id),
+    FOREIGN KEY (item_id) REFERENCES itens(id) ON DELETE CASCADE,
+    FOREIGN KEY (colecao_id) REFERENCES colecoes(id) ON DELETE CASCADE
+);
+
+-- Tabela de lista de desejos (RF009)
+CREATE TABLE lista_desejos (
+    usuario_id INT,
+    item_id INT,
+    data_adicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    observacoes TEXT,
+    PRIMARY KEY (usuario_id, item_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES itens(id) ON DELETE CASCADE
+);
+
+-- Inserir usuário admin padrão (senha: 123456)
+INSERT INTO usuarios (nome, email, senha, tipo) VALUES
+('Administrador', 'admin@collectify.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
+('Usuário Teste', 'usuario@teste.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'visitante');
+
+-- Inserir coleções padrão (RNF003)
+INSERT INTO colecoes (nome, categoria, descricao) VALUES
+('Rock Clássico', 'genero', 'Coleção de rock clássico'),
+('Jazz', 'genero', 'Coleção de jazz'),
+('Favoritos Pessoais', 'favoritas', 'Meus álbuns favoritos'),
+('CDs', 'tipo_item', 'Coleção de CDs'),
+('LPs', 'tipo_item', 'Coleção de LPs');
+
+-- Inserir alguns itens de exemplo
+INSERT INTO itens (
+    artista_banda, nome, gravadora, ano_lancamento, 
+    tipo_midia, qualidade, autografado, importado, 
+    observacoes, usuario_id
+) VALUES
+('Pink Floyd', 'The Dark Side of the Moon', 'Harvest', 1973, 
+ 'LP', 'Excelente', FALSE, TRUE, 
+ 'Primeira pressão importada', 1),
+('Metallica', 'Master of Puppets', 'Elektra', 1986, 
+ 'CD', 'Muito Boa', TRUE, FALSE, 
+ 'Autografado por todos os membros', 1),
+('Miles Davis', 'Kind of Blue', 'Columbia', 1959, 
+ 'LP', 'Boa', FALSE, TRUE, 
+ 'Edição especial japonesa', 1);
